@@ -27,7 +27,9 @@
 
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 //#define DUBUG_RTC
-#define DEBUG_DHT22
+//#define DEBUG_DHT22
+//#define DEBUG_DOOR
+#define DEBUG_FIREBASE
 
 ///////////////
 /////Wifi//////
@@ -46,7 +48,7 @@
 #define API_KEY "AIzaSyDEcPCgQuwvFKN88l4GLEG34RA2JUCOqiA"
 
 // Insert RTDB URLefine the RTDB URL */
-#define DATABASE_URL "fir-iot-ec360-default-rtdb.asia-southeast1.firebasedatabase.app" 
+#define DATABASE_URL "https://fir-iot-ec360-default-rtdb.asia-southeast1.firebasedatabase.app/" 
 
 //Define Firebase Data object
 FirebaseData fbdo;
@@ -64,7 +66,8 @@ bool signupOK = false;
 
 
 RTC_DS1307 RTC;     // Setup an instance of DS1307 naming it RTC
-char Time[50];
+char c_time[50] = {'0','\n','\0'};
+String Time = "nothing";
 int ss = 0;
 int mm = 0;
 int hh = 0;
@@ -78,18 +81,28 @@ uint8_t DHTPin = D8;
 
 DHT dht(DHTPin, DHTTYPE);                
 
-float Temperature = 0;
-float Humidity = 0;
-bool flag = 0;
+float t = 0;
+float h = 0;
 bool is_water_level_dangerously_low = 0;
+int doorState=0;
 
 ////////////////
 ///FUNCTIONS////
 ////////////////
 
 void read_temp(){
-  Temperature = dht.readTemperature(); // Gets the values of the temperature
-  Humidity = dht.readHumidity(); // Gets the values of the humidity 
+  t = dht.readTemperature(); // Gets the values of the temperature
+  h = dht.readHumidity(); // Gets the values of the humidity 
+  if (isnan(h) || isnan(t)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+  #ifdef DEBUG_DHT22
+    Serial.print(F("Humidity: "));
+    Serial.print(h);
+    Serial.print(F("%  Temperature: "));
+    Serial.print(t);
+  #endif
 }
 
 void FirebaseSetup(){
@@ -136,53 +149,48 @@ void RTCSetup(){
 }
 
 void setup() {
-  Serial.begin(115200); // Set serial port speed
+  Serial.begin(9600); // Set serial port speed
   Wire.begin(); // Start the I2C
   pinMode(DHTPin, INPUT);
   pinMode(magnetic_switch_pin, INPUT_PULLUP);
-  FirebaseSetup();
   RTCSetup();
-  
+  FirebaseSetup();
+
+  dht.begin();
 }
 
 
 
 void loop() {
-  if(flag ==0){
-    //RTC
-    RTCSetup();
-    flag = 1;
-  }
-  if(flag = 1){
     //Temperature and Humidity
-    read_temp();
+
 
     //Door
-    if (digitalRead(magnetic_switch_pin) == LOW) {
-      Serial.println("Switch Closed");
-      while (digitalRead(magnetic_switch_pin) == LOW) {}
+    doorState = digitalRead(magnetic_switch_pin); // read state
+    #ifdef DEBUG_DOOR
+    if (doorState == HIGH) {
+      Serial.println("The door is open");
+    } else {
+      Serial.println("The door is closed");
     }
-    else {
-      Serial.println("Switch Open");
-    }
+    #endif
 
     //Proximity
 
     //water level
-    while (Serial.available()){
-      is_water_level_dangerously_low = Serial.read();
-    }
+    
 
     //RTC
     DateTime now = RTC.now();
     ss = now.second();
     mm = now.minute();
     hh = now.hour();
-    DD = now.dayOfTheWeek();
+    DD = now.dayOfWeek();
     dd = now.day();
     MM = now.month();
     yyyy = now.year();
-    sprintf(Time,"%d/%d/%d %d:%d:%d \n"), yyyy,MM,dd,hh,mm,ss);
+    sprintf(c_time,"%d/%d/%d %d:%d:%d", yyyy,MM,dd,hh,mm,ss);
+    Time = c_time;
     
     //Debugging Code
     #ifdef DEBUG_RTC
@@ -201,15 +209,26 @@ void loop() {
    #endif
    
    #ifdef DEBUG_DHT22
-     Serial.print("Temperature = "), Serial.println((int)Temperature);
-     Serial.print("Humidity = "), Serial.println((int)Humidity);
+     Serial.print("Temperature = "), Serial.println(t);
+     Serial.print("Humidity = "), Serial.println(h);
    #endif
 
+   if(millis()%2000 == 0){
+    read_temp();
+   }
+
   //Send data to firebase
-   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
-      sendDataPrevMillis = millis();
-      // Write an Int number on the database path test/int
-      if (Firebase.RTDB.setFloat(&fbdo, "test/Temperature", Temperature)){
+  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0)){
+    sendDataPrevMillis = millis();
+    // Write an Int number on the database path test/int
+    #ifndef DEBUG_FIREBASE
+      Firebase.RTDB.setInt(&fbdo, "test/Door", doorState);
+      Firebase.RTDB.setFloat(&fbdo, "test/Temperature", t);
+      Firebase.RTDB.setFloat(&fbdo, "test/Humidity", h);
+      Firebase.RTDB.setString(&fbdo, "test/Time", Time);
+    
+    #else
+      if (Firebase.RTDB.setInt(&fbdo, "test/Door", doorState)){
         Serial.println("PASSED");
         Serial.println("PATH: " + fbdo.dataPath());
         Serial.println("TYPE: " + fbdo.dataType());
@@ -218,30 +237,40 @@ void loop() {
         Serial.println("FAILED");
         Serial.println("REASON: " + fbdo.errorReason());
       }
+      count++;
       
-      if (Firebase.RTDB.setFloat(&fbdo, "test/Humidity", Humidity)){
+      // Write an Float number on the database path test/float
+      if (Firebase.RTDB.setFloat(&fbdo, "test/Temperature", t)){
         Serial.println("PASSED");
         Serial.println("PATH: " + fbdo.dataPath());
         Serial.println("TYPE: " + fbdo.dataType());
       }
-      
+      else {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.errorReason());
+      }
+  
+      if (Firebase.RTDB.setFloat(&fbdo, "test/Humidity", h)){
+        Serial.println("PASSED");
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
+      }
+      else {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.errorReason());
+      }
+  
+      if (Firebase.RTDB.setString(&fbdo, "test/Time", Time)){
+        Serial.println("PASSED");
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
+      }
       else {
         Serial.println("FAILED");
         Serial.println("REASON: " + fbdo.errorReason());
       }
 
-      if (Firebase.RTDB.setInt(&fbdo, "test/Door", digitalRead(magnetic_switch_pin))){
-        Serial.println("PASSED");
-        Serial.println("PATH: " + fbdo.dataPath());
-        Serial.println("TYPE: " + fbdo.dataType());
-      }
-      
-      else {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-      }
-
-      if (Firebase.RTDB.setString(&fbdo, "test/Time", Time){
+      if (Firebase.RTDB.setFloat(&fbdo, "test/Low_Oil_Level", 0)){
         Serial.println("PASSED");
         Serial.println("PATH: " + fbdo.dataPath());
         Serial.println("TYPE: " + fbdo.dataType());
@@ -250,15 +279,6 @@ void loop() {
         Serial.println("FAILED");
         Serial.println("REASON: " + fbdo.errorReason());
       }
-      if (Firebase.RTDB.setInt(&fbdo, "test/Water Level", is_water_level_dangerously_low){
-        Serial.println("PASSED");
-        Serial.println("PATH: " + fbdo.dataPath());
-        Serial.println("TYPE: " + fbdo.dataType());
-      }
-      else {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-      }
-    }
+    #endif
   }
 }

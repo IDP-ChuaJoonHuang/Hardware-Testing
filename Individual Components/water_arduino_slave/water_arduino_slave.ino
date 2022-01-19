@@ -1,3 +1,5 @@
+bool is_water_level_dangerous = false;
+
 
 
 void setup() {
@@ -8,7 +10,10 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if(digitalRead(2) == HIGH){
-    Serial.println("Warning");
+  if(!digitalRead(2) == HIGH){
+    //Serial.println("Warning");
+    Serial.write((unsigned char)'1');
+  }else{
+    Serial.write((unsigned char)'0');
   }
 }
