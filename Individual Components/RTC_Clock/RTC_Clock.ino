@@ -4,15 +4,15 @@
 #elif defined(ESP8266)
   #include <ESP8266WiFi.h>
 #endif
-#include <Firebase_ESP_Client.h>
+//#include <Firebase_ESP_Client.h>
 #include <Wire.h>
 #include "RTClib.h"
 #include "DHT.h"
 
 //Provide the token generation process info.
-#include "addons/TokenHelper.h"
+//#include "addons/TokenHelper.h"
 //Provide the RTDB payload printing info and other helper functions.
-#include "addons/RTDBHelper.h"
+//#include "addons/RTDBHelper.h"
 
 RTC_DS1307 RTC;     // Setup an instance of DS1307 naming it RTC
 char Time[50];
@@ -47,7 +47,7 @@ void loop() {
     ss = now.second();
     mm = now.minute();
     hh = now.hour();
-    DD = now.dayOfWeek();
+//    DD = now.dayOfWeek();
     dd = now.day();
     MM = now.month();
     yyyy = now.year();
