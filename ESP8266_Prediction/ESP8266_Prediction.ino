@@ -14,12 +14,12 @@
 #define PUBLISH_FREQUENCY 5000
 #define API_KEY "AIzaSyDEcPCgQuwvFKN88l4GLEG34RA2JUCOqiA"
 #define DATABASE_URL "fir-iot-ec360-default-rtdb.asia-southeast1.firebasedatabase.app/"
-//#define SENDUBIDOTS
+#define SENDUBIDOTS
 
 const char *WIFI_SSID = "你回来了";      // Put here your Wi-Fi SSID
 const char *WIFI_PASS = "okvx4408";      // Put here your Wi-Fi password
 const char* DEVICE_LABEL = "esp8266";      // device label
-const char *UBIDOTS_TOKEN = "BBFF-w4V5RHXuY912iDpetacCwu0GCFAfuL";  // Put here your Ubidots TOKEN
+const char *UBIDOTS_TOKEN = "BBFF-z1BQlo0p0ya6TuRfe7znNAoEqfdWqw";  // Put here your Ubidots TOKEN
 Ubidots ubidots(UBIDOTS_TOKEN, UBI_HTTP);
 
 FirebaseData fbdo;
@@ -66,7 +66,7 @@ void loop() {
   if ((millis() - lastmillis) > PUBLISH_FREQUENCY) // triggers the routine every 5 seconds
     {
      ubidots.add("Is Machine Normal", prediction);
-     ubidots.add("Probability", probability);
+     ubidots.add("Percentage", probability);
      bool bufferSent = false;
      bufferSent = ubidots.send(DEVICE_LABEL); // Will send data to a device label that matches the device Id
      if (bufferSent) {
@@ -79,7 +79,7 @@ void loop() {
     if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 7000|| sendDataPrevMillis == 0)){
       sendDataPrevMillis = millis();
       // Write an Int number on the database path test/int
-      if (Firebase.RTDB.getInt(&fbdo, "/Predictions/Predicted Machine Status")){
+      if (Firebase.RTDB.getInt(&fbdo, "/Predictions/Predicted Lift Status")){
         Serial.print("Data type = "); Serial.println(fbdo.dataType());
         prediction = fbdo.intData();
         Serial.println(prediction);
@@ -89,7 +89,7 @@ void loop() {
         Serial.println("REASON: " + fbdo.errorReason());
       }
       count++;
-      if (Firebase.RTDB.getFloat(&fbdo, "/Predictions/Probability")){
+      if (Firebase.RTDB.getFloat(&fbdo, "/Predictions/Percentage")){
         Serial.print("Data type = "); Serial.println(fbdo.dataType());
         probability = fbdo.floatData();
         Serial.println(probability);
