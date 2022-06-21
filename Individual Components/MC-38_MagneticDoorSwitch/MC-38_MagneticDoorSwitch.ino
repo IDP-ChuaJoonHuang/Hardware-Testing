@@ -1,4 +1,4 @@
-#define DOOR_SENSOR_PIN  D3  // ESP32 pin GIOP19 connected to door sensor's pin
+#define DOOR_SENSOR_PIN  D5  // ESP32 pin GIOP19 connected to door sensor's pin
 
 int doorState=0;
 

@@ -16,8 +16,8 @@
 #define DATABASE_URL "fir-iot-ec360-default-rtdb.asia-southeast1.firebasedatabase.app/"
 #define SENDUBIDOTS
 
-const char *WIFI_SSID = "你回来了";      // Put here your Wi-Fi SSID
-const char *WIFI_PASS = "okvx4408";      // Put here your Wi-Fi password
+const char *WIFI_SSID = "dljs8888@unifi";      // Put here your Wi-Fi SSID
+const char *WIFI_PASS = "djmxs8932";      // Put here your Wi-Fi password
 const char* DEVICE_LABEL = "esp8266";      // device label
 const char *UBIDOTS_TOKEN = "BBFF-z1BQlo0p0ya6TuRfe7znNAoEqfdWqw";  // Put here your Ubidots TOKEN
 Ubidots ubidots(UBIDOTS_TOKEN, UBI_HTTP);
@@ -60,7 +60,7 @@ void setup() {
 
 void loop() {
 //   Wire.beginTransmission(8); /* begin with device address 8 */
-//   Wire.write("Hello Arduino");  /* sends hello string */
+//   Wire.write("Hello Arduino");  /* sends hello string */l
 //   Wire.endTransmission();    /* stop transmitting */
   #ifdef SENDUBIDOTS
   if ((millis() - lastmillis) > PUBLISH_FREQUENCY) // triggers the routine every 5 seconds
@@ -76,7 +76,7 @@ void loop() {
      lastmillis = millis();
     }
   #endif
-    if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 7000|| sendDataPrevMillis == 0)){
+    if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > 3000|| sendDataPrevMillis == 0)){
       sendDataPrevMillis = millis();
       // Write an Int number on the database path test/int
       if (Firebase.RTDB.getInt(&fbdo, "/Predictions/Predicted Lift Status")){

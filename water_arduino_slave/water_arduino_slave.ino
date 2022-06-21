@@ -42,6 +42,7 @@ void setup() {
 }
 
 void loop() {
+  //Serial.print(digitalRead(2));
   delay(100);
 }
 

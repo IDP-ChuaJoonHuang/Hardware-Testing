@@ -14,6 +14,9 @@
 //Provide the RTDB payload printing info and other helper functions.
 #include "addons/RTDBHelper.h"
 
+#define SENDFIREBASE
+#define SENDUBIDOTS
+
 
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 #define DHTPin 5
@@ -26,8 +29,8 @@ EnergyMonitor emon;
 #define API_KEY "AIzaSyDEcPCgQuwvFKN88l4GLEG34RA2JUCOqiA"
 #define DATABASE_URL "https://fir-iot-ec360-default-rtdb.asia-southeast1.firebasedatabase.app/" 
 const char *UBIDOTS_TOKEN = "BBFF-w4V5RHXuY912iDpetacCwu0GCFAfuL";  // Put here your Ubidots TOKEN
-const char *WIFI_SSID = "Guest-PTS";      // Put here your Wi-Fi SSID
-const char *WIFI_PASS = "Potensi@guestii88";      // Put here your Wi-Fi password
+const char *WIFI_SSID = "ChinKeat MESA PRESIDENT";      // Put here your Wi-Fi SSID
+const char *WIFI_PASS = "s201e6cb7d1";      // Put here your Wi-Fi password
 const char *DEVICE_LABEL = "esp32";   // Put here your Device label to which data  will be published
 const char *VARIABLE_LABEL = "Temperature"; // Put here your Variable label to which data  will be published
 const char *VARIABLE_LABEL_2 = "Voltage";
@@ -201,7 +204,7 @@ void loop() {
       ubidots.add(VARIABLE_LABEL_4, rpm);
   
       ubidots.publish(DEVICE_LABEL);
-  ////    lastmillis = millis();
+      lastmillis = millis();
   ////    rev = 0;
     }
   #endif
